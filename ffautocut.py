@@ -49,6 +49,7 @@ def add_strip(
     strip.frame_offset_end = frame_offset_end
     strip.frame_final_duration = frame_final_duration
     strip.color_tag = RED
+    return strip
 
 
 def print_strip_info(strip):
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         for pair in cut_pairs:
             start, end = pair
 
-            add_strip(
+            added_strip = add_strip(
                 bpy.context,
                 strip.filepath,
                 frame_start=strip_timeline_offset,
@@ -97,3 +98,12 @@ if __name__ == "__main__":
                 frame_final_duration=end - start,
                 channel=strip.channel + 1
             )
+            added_strip.transform.filter = strip.transform.filter
+            added_strip.transform.scale_x = strip.transform.scale_x
+            added_strip.transform.scale_y = strip.transform.scale_y
+            added_strip.transform.rotation = strip.transform.rotation
+            added_strip.transform.offset_x = strip.transform.offset_x
+            added_strip.transform.offset_y = strip.transform.offset_y
+            added_strip.transform.origin = strip.transform.origin
+            added_strip.use_flip_x = strip.use_flip_x
+            added_strip.use_flip_y = strip.use_flip_y
