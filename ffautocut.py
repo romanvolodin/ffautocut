@@ -181,7 +181,7 @@ class CombineStrips(Operator):
 
 
 class SEQUENCE_PT_detect_cut(Panel):
-    bl_label = "FFAutoCut"
+    bl_label = "FFAutoCut {}.{}.{}".format(*bl_info["version"])
     bl_category = "FFAutoCut"
     bl_space_type = "SEQUENCE_EDITOR"
     bl_region_type = "UI"
