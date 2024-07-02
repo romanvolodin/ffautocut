@@ -160,6 +160,7 @@ class Preferences(AddonPreferences):
 class FFAutoCut(Operator):
     bl_idname = "sequence.detect_cut"
     bl_label = "FFAutoCut"
+    bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
         preferences = context.preferences.addons[__name__].preferences
