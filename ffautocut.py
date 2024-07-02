@@ -3,6 +3,7 @@ import subprocess
 from itertools import chain, pairwise
 
 import bpy
+from bpy.path import abspath
 
 
 def filter_selected_strips(context, types=('MOVIE',)):
@@ -71,10 +72,11 @@ if __name__ == "__main__":
     for strip in selected_strips:
         strip_timeline_offset = strip.frame_final_start
         strip_duration_in_seconds = strip.frame_duration / strip.fps
+        video_filepath = abspath(strip.filepath)
 
         out = detect_cuts_with_ffprobe(
             ffprobe="ffprobe",
-            filepath=strip.filepath,
+            filepath=video_filepath,
             time_start=0,
             time_end=strip_duration_in_seconds,
             threshold=0.1
@@ -91,7 +93,7 @@ if __name__ == "__main__":
 
             added_strip = add_strip(
                 bpy.context,
-                strip.filepath,
+                video_filepath,
                 frame_start=strip_timeline_offset,
                 frame_offset_start=start,
                 frame_offset_end=end,
