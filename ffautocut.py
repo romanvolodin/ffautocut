@@ -67,19 +67,26 @@ def add_strip(
     return strip
 
 
-def combine_strips(context, strip1, strip2):
-    if strip1.filepath != strip2.filepath:
+def combine_strips(context, strips):
+    if not strips or len(strips) == 1:
         return
 
-    if strip1.frame_final_end != strip2.frame_final_start:
-        return
+    sorted_strips = sorted(strips, key=lambda strip: strip.frame_final_start)
+    first_strip, *rest_strips = sorted_strips
 
-    if strip1.frame_start != strip2.frame_start:
-        return
+    for next_strip in rest_strips.copy():
+        if (
+            first_strip.filepath != next_strip.filepath
+            or first_strip.frame_final_end != next_strip.frame_final_start
+            or first_strip.frame_start != next_strip.frame_start
+        ):
+            combine_strips(context, rest_strips)
+            return
 
-    strip2_end = strip2.frame_final_end
-    context.scene.sequence_editor.sequences.remove(strip2)
-    strip1.frame_final_end = strip2_end
+        next_strip_end = next_strip.frame_final_end
+        rest_strips.pop(rest_strips.index(next_strip))
+        context.scene.sequence_editor.sequences.remove(next_strip)
+        first_strip.frame_final_end = next_strip_end
 
 
 def print_strip_info(strip):
@@ -177,8 +184,7 @@ class CombineStrips(Operator):
 
     def execute(self, context):
         selected_strips = filter_selected_strips(context)
-        strip1, strip2 = selected_strips
-        combine_strips(context, strip1, strip2)
+        combine_strips(context, selected_strips)
         return {"FINISHED"}
 
 
