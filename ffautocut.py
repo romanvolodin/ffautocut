@@ -95,7 +95,7 @@ def print_strip_info(strip):
     print()
 
 
-def main(context, ffprobe):
+def main(context, ffprobe, threshold):
     selected_strips = filter_selected_strips(context)
 
     for strip in selected_strips:
@@ -108,7 +108,7 @@ def main(context, ffprobe):
             filepath=video_filepath,
             time_start=0,
             time_end=strip_duration_in_seconds,
-            threshold=0.1,
+            threshold=threshold,
         )
 
         cut_pairs = list(
@@ -162,9 +162,11 @@ class FFAutoCut(Operator):
     bl_label = "FFAutoCut"
     bl_options = {"REGISTER", "UNDO"}
 
+    threshold: bpy.props.FloatProperty(default=0.3)
+
     def execute(self, context):
         preferences = context.preferences.addons[__name__].preferences
-        main(bpy.context, preferences.ffprobe)
+        main(bpy.context, preferences.ffprobe, self.threshold)
         return {"FINISHED"}
 
 
@@ -188,9 +190,14 @@ class SEQUENCE_PT_detect_cut(Panel):
 
     def draw(self, context):
         layout = self.layout
+        col = layout.column(align=True)
+        col.prop(context.scene, "detect_cuts_threshold", text="Detect Threshold")
+
         row = layout.row(align=True)
         row.scale_y = 1.5
-        row.operator("sequence.detect_cut", text="Detect cuts")
+        operator = row.operator("sequence.detect_cut", text="Detect cuts")
+        operator.threshold = context.scene.detect_cuts_threshold
+        layout.label(text="")
         layout.operator("sequence.combine_strips")
 
 
@@ -200,12 +207,16 @@ def register():
     bpy.utils.register_class(Preferences)
     bpy.utils.register_class(SEQUENCE_PT_detect_cut)
 
+    bpy.types.Scene.detect_cuts_threshold = bpy.props.FloatProperty(default=0.3)
+
 
 def unregister():
     bpy.utils.unregister_class(FFAutoCut)
     bpy.utils.unregister_class(CombineStrips)
     bpy.utils.unregister_class(Preferences)
     bpy.utils.unregister_class(SEQUENCE_PT_detect_cut)
+
+    del bpy.types.Scene.detect_cuts_threshold
 
 
 if __name__ == "__main__":
