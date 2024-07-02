@@ -67,6 +67,21 @@ def add_strip(
     return strip
 
 
+def combine_strips(context, strip1, strip2):
+    if strip1.filepath != strip2.filepath:
+        return
+
+    if strip1.frame_final_end != strip2.frame_final_start:
+        return
+
+    if strip1.frame_start != strip2.frame_start:
+        return
+
+    strip2_end = strip2.frame_final_end
+    context.scene.sequence_editor.sequences.remove(strip2)
+    strip1.frame_final_end = strip2_end
+
+
 def print_strip_info(strip):
     print(f"{strip.name=}")
     print(f"{strip.fps=}")
@@ -152,6 +167,18 @@ class FFAutoCut(Operator):
         return {"FINISHED"}
 
 
+class CombineStrips(Operator):
+    bl_idname = "sequence.combine_strips"
+    bl_label = "Combine Strips"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        selected_strips = filter_selected_strips(context)
+        strip1, strip2 = selected_strips
+        combine_strips(context, strip1, strip2)
+        return {"FINISHED"}
+
+
 class SEQUENCE_PT_detect_cut(Panel):
     bl_label = "FFAutoCut"
     bl_category = "FFAutoCut"
@@ -163,16 +190,19 @@ class SEQUENCE_PT_detect_cut(Panel):
         row = layout.row(align=True)
         row.scale_y = 1.5
         row.operator("sequence.detect_cut", text="Detect cuts")
+        layout.operator("sequence.combine_strips")
 
 
 def register():
     bpy.utils.register_class(FFAutoCut)
+    bpy.utils.register_class(CombineStrips)
     bpy.utils.register_class(Preferences)
     bpy.utils.register_class(SEQUENCE_PT_detect_cut)
 
 
 def unregister():
     bpy.utils.unregister_class(FFAutoCut)
+    bpy.utils.unregister_class(CombineStrips)
     bpy.utils.unregister_class(Preferences)
     bpy.utils.unregister_class(SEQUENCE_PT_detect_cut)
 
