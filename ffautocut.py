@@ -4,6 +4,22 @@ from itertools import chain, pairwise
 
 import bpy
 from bpy.path import abspath
+from bpy.props import StringProperty
+from bpy.types import AddonPreferences, Operator, Panel
+
+
+bl_info = {
+    "name": "FFAutoCut",
+    "author": "Roman Volodin",
+    "version": (1, 0, 0),
+    "blender": (3, 0, 0),
+    "location": "Sequence Editor -> N-panel",
+    "description": "Automatic scene cut detection with FFprobe",
+    "warning": "",
+    "doc_url": "",
+    "tracker_url": "",
+    "category": "Sequencer",
+}
 
 
 def filter_selected_strips(context, types=('MOVIE',)):
@@ -66,8 +82,8 @@ def print_strip_info(strip):
     print()
 
 
-if __name__ == "__main__":
-    selected_strips = filter_selected_strips(bpy.context)
+def main(context, ffprobe):
+    selected_strips = filter_selected_strips(context)
 
     for strip in selected_strips:
         strip_timeline_offset = strip.frame_final_start
@@ -75,7 +91,7 @@ if __name__ == "__main__":
         video_filepath = abspath(strip.filepath)
 
         out = detect_cuts_with_ffprobe(
-            ffprobe="ffprobe",
+            ffprobe=ffprobe,
             filepath=video_filepath,
             time_start=0,
             time_end=strip_duration_in_seconds,
@@ -92,7 +108,7 @@ if __name__ == "__main__":
             start, end = pair
 
             added_strip = add_strip(
-                bpy.context,
+                context,
                 video_filepath,
                 frame_start=strip_timeline_offset,
                 frame_offset_start=start,
@@ -109,3 +125,57 @@ if __name__ == "__main__":
             added_strip.transform.origin = strip.transform.origin
             added_strip.use_flip_x = strip.use_flip_x
             added_strip.use_flip_y = strip.use_flip_y
+
+
+class Preferences(AddonPreferences):
+    bl_idname = __name__
+
+    ffprobe: StringProperty(
+        name="ffprobe",
+        subtype="FILE_PATH",
+        description="Command or path to run ffprobe",
+        default="ffprobe",
+    )
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "ffprobe")
+
+
+class FFAutoCut(Operator):
+    bl_idname = "sequence.detect_cut"
+    bl_label = "FFAutoCut"
+
+    def execute(self, context):
+        preferences = context.preferences.addons[__name__].preferences
+        main(bpy.context, preferences.ffprobe)
+        return {"FINISHED"}
+
+
+class SEQUENCE_PT_detect_cut(Panel):
+    bl_label = "FFAutoCut"
+    bl_category = "FFAutoCut"
+    bl_space_type = "SEQUENCE_EDITOR"
+    bl_region_type = "UI"
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.scale_y = 1.5
+        row.operator("sequence.detect_cut", text="Detect cuts")
+
+
+def register():
+    bpy.utils.register_class(FFAutoCut)
+    bpy.utils.register_class(Preferences)
+    bpy.utils.register_class(SEQUENCE_PT_detect_cut)
+
+
+def unregister():
+    bpy.utils.unregister_class(FFAutoCut)
+    bpy.utils.unregister_class(Preferences)
+    bpy.utils.unregister_class(SEQUENCE_PT_detect_cut)
+
+
+if __name__ == "__main__":
+    register()
