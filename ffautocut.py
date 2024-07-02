@@ -25,8 +25,8 @@ def detect_cuts_with_ffprobe(ffprobe, filepath, time_start, time_end, threshold=
     return json.loads(output.decode("utf-8"))
 
 
-def generate_cut_pairs(ffrobe_output, duration, fps):
-    cuts_in_seconds = [float(frame["pkt_dts_time"]) for frame in ffrobe_output["frames"]]
+def generate_cut_pairs(ffprobe_output, duration, fps):
+    cuts_in_seconds = [float(frame["pkt_dts_time"]) for frame in ffprobe_output["frames"]]
     cuts_in_frames = [round(time * fps) for time in cuts_in_seconds]
     pairs = pairwise(chain.from_iterable(([0], cuts_in_frames, [duration])))
     return pairs
