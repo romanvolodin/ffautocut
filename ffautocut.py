@@ -22,7 +22,7 @@ bl_info = {
 }
 
 
-def filter_selected_strips(context, types=('MOVIE',)):
+def filter_selected_strips(context, types=("MOVIE",)):
     selected_strips = [
         strip for strip in context.selected_sequences if strip.type in types
     ]
@@ -42,7 +42,9 @@ def detect_cuts_with_ffprobe(ffprobe, filepath, time_start, time_end, threshold=
 
 
 def generate_cut_pairs(ffprobe_output, duration, fps):
-    cuts_in_seconds = [float(frame["pkt_dts_time"]) for frame in ffprobe_output["frames"]]
+    cuts_in_seconds = [
+        float(frame["pkt_dts_time"]) for frame in ffprobe_output["frames"]
+    ]
     cuts_in_frames = [round(time * fps) for time in cuts_in_seconds]
     pairs = pairwise(chain.from_iterable(([0], cuts_in_frames, [duration])))
     return pairs
@@ -95,14 +97,16 @@ def main(context, ffprobe):
             filepath=video_filepath,
             time_start=0,
             time_end=strip_duration_in_seconds,
-            threshold=0.1
+            threshold=0.1,
         )
 
-        cut_pairs = list(generate_cut_pairs(
-            out,
-            strip.frame_duration,
-            strip.fps,
-        ))
+        cut_pairs = list(
+            generate_cut_pairs(
+                out,
+                strip.frame_duration,
+                strip.fps,
+            )
+        )
 
         for pair in cut_pairs:
             start, end = pair
@@ -114,7 +118,7 @@ def main(context, ffprobe):
                 frame_offset_start=start,
                 frame_offset_end=end,
                 frame_final_duration=end - start,
-                channel=strip.channel + 1
+                channel=strip.channel + 1,
             )
             added_strip.transform.filter = strip.transform.filter
             added_strip.transform.scale_x = strip.transform.scale_x
