@@ -23,9 +23,7 @@ bl_info = {
 
 
 def filter_selected_strips(context, types=("MOVIE",)):
-    selected_strips = [
-        strip for strip in context.selected_sequences if strip.type in types
-    ]
+    selected_strips = [strip for strip in context.selected_sequences if strip.type in types]
     if selected_strips:
         return selected_strips
 
@@ -42,9 +40,7 @@ def detect_cuts_with_ffprobe(ffprobe, filepath, time_start, time_end, threshold=
 
 
 def generate_cut_pairs(ffprobe_output, duration, fps):
-    cuts_in_seconds = [
-        float(frame["pkt_dts_time"]) for frame in ffprobe_output["frames"]
-    ]
+    cuts_in_seconds = [float(frame["pkt_dts_time"]) for frame in ffprobe_output["frames"]]
     cuts_in_frames = [round(time * fps) for time in cuts_in_seconds]
     pairs = pairwise(chain.from_iterable(([0], cuts_in_frames, [duration])))
     return pairs
