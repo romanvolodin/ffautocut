@@ -207,6 +207,9 @@ class SEQUENCE_PT_detect_cut(Panel):
         layout.operator("sequence.combine_strips")
 
 
+addon_keymaps = []
+
+
 def register():
     bpy.utils.register_class(FFAutoCut)
     bpy.utils.register_class(CombineStrips)
@@ -214,6 +217,13 @@ def register():
     bpy.utils.register_class(SEQUENCE_PT_detect_cut)
 
     bpy.types.Scene.detect_cuts_threshold = bpy.props.FloatProperty(default=0.3)
+
+    window_manager = bpy.context.window_manager
+    keyconfig = window_manager.keyconfigs.addon
+    if keyconfig:
+        keymap = keyconfig.keymaps.new(name="SequencerCommon", space_type="SEQUENCE_EDITOR")
+        keymap_item = keymap.keymap_items.new("sequence.combine_strips", type="J", value="PRESS")
+        addon_keymaps.append((keymap, keymap_item))
 
 
 def unregister():
@@ -223,6 +233,10 @@ def unregister():
     bpy.utils.unregister_class(SEQUENCE_PT_detect_cut)
 
     del bpy.types.Scene.detect_cuts_threshold
+
+    for keymap, keymap_item in addon_keymaps:
+        keymap.keymap_items.remove(keymap_item)
+    addon_keymaps.clear()
 
 
 if __name__ == "__main__":
