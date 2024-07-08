@@ -54,6 +54,7 @@ def add_strip(
     frame_offset_end,
     frame_final_duration,
     channel,
+    detect_cuts_threshold,
 ):
     NAME = "PRM_SHOT"
     RED = "COLOR_01"
@@ -64,6 +65,7 @@ def add_strip(
     strip.frame_offset_end = frame_offset_end
     strip.frame_final_duration = frame_final_duration
     strip.color_tag = RED
+    strip.detect_cuts_threshold = detect_cuts_threshold
     return strip
 
 
@@ -137,6 +139,7 @@ def main(context, ffprobe, threshold):
                 frame_offset_end=end,
                 frame_final_duration=end - start,
                 channel=strip.channel + 1,
+                detect_cuts_threshold=threshold,
             )
             added_strip.transform.filter = strip.transform.filter
             added_strip.transform.scale_x = strip.transform.scale_x
@@ -195,14 +198,21 @@ class SEQUENCE_PT_detect_cut(Panel):
     bl_region_type = "UI"
 
     def draw(self, context):
+        selected_strips = filter_selected_strips(context)
+
         layout = self.layout
         col = layout.column(align=True)
-        col.prop(context.scene, "detect_cuts_threshold", text="Detect Threshold")
+
+        if not selected_strips:
+            col.label(text="No strips selected")
+            return
+
+        col.prop(selected_strips[0], "detect_cuts_threshold", text="Threshold")
 
         row = layout.row(align=True)
         row.scale_y = 1.5
         operator = row.operator("sequence.detect_cut", text="Detect cuts")
-        operator.threshold = context.scene.detect_cuts_threshold
+        operator.threshold = selected_strips[0].detect_cuts_threshold
         layout.label(text="")
         layout.operator("sequence.combine_strips")
 
@@ -216,7 +226,11 @@ def register():
     bpy.utils.register_class(Preferences)
     bpy.utils.register_class(SEQUENCE_PT_detect_cut)
 
-    bpy.types.Scene.detect_cuts_threshold = bpy.props.FloatProperty(default=0.3)
+    bpy.types.MovieSequence.detect_cuts_threshold = bpy.props.FloatProperty(
+        default=0.3,
+        soft_max=1.0,
+        soft_min=0.01,
+    )
 
     window_manager = bpy.context.window_manager
     keyconfig = window_manager.keyconfigs.addon
@@ -232,7 +246,7 @@ def unregister():
     bpy.utils.unregister_class(Preferences)
     bpy.utils.unregister_class(SEQUENCE_PT_detect_cut)
 
-    del bpy.types.Scene.detect_cuts_threshold
+    del bpy.types.MovieSequence.detect_cuts_threshold
 
     for keymap, keymap_item in addon_keymaps:
         keymap.keymap_items.remove(keymap_item)
