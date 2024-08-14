@@ -28,7 +28,7 @@ def filter_selected_strips(context, types=("MOVIE",)):
         return selected_strips
 
 
-def detect_cuts_with_ffprobe(ffprobe, filepath, time_start, time_end, threshold=0.3):
+def detect_cuts_with_ffprobe(ffprobe, filepath, time_start, time_end, threshold=0.1):
     output = subprocess.check_output(
         (
             f"{ffprobe} -hide_banner -show_frames -print_format json -f lavfi "
@@ -172,7 +172,7 @@ class FFAutoCut(Operator):
     bl_label = "FFAutoCut"
     bl_options = {"REGISTER", "UNDO"}
 
-    threshold: bpy.props.FloatProperty(default=0.3)
+    threshold: bpy.props.FloatProperty(default=0.1)
 
     def execute(self, context):
         preferences = context.preferences.addons[__name__].preferences
@@ -227,7 +227,7 @@ def register():
     bpy.utils.register_class(SEQUENCE_PT_detect_cut)
 
     bpy.types.MovieSequence.detect_cuts_threshold = bpy.props.FloatProperty(
-        default=0.3,
+        default=0.1,
         soft_max=1.0,
         soft_min=0.01,
     )
