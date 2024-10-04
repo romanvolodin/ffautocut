@@ -108,15 +108,15 @@ def main(context, ffprobe, threshold):
     selected_strips = filter_selected_strips(context)
 
     for strip in selected_strips:
-        strip_timeline_offset = strip.frame_final_start
-        strip_duration_in_seconds = strip.frame_duration / strip.fps
+        strip_start_in_seconds = strip.frame_final_start / strip.fps
+        strip_end_in_seconds = strip.frame_final_end / strip.fps
         video_filepath = abspath(strip.filepath)
 
         out = detect_cuts_with_ffprobe(
             ffprobe=ffprobe,
             filepath=video_filepath,
-            time_start=0,
-            time_end=strip_duration_in_seconds,
+            time_start=strip_start_in_seconds,
+            time_end=strip_end_in_seconds,
             threshold=threshold,
         )
 
@@ -131,10 +131,13 @@ def main(context, ffprobe, threshold):
         for pair in cut_pairs:
             start, end = pair
 
+            if start < strip.frame_final_start or end > strip.frame_final_end:
+                continue
+
             added_strip = add_strip(
                 context,
                 video_filepath,
-                frame_start=strip_timeline_offset,
+                frame_start=int(strip.frame_start),
                 frame_offset_start=start,
                 frame_offset_end=end,
                 frame_final_duration=end - start,
